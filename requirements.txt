@@ -1,5 +1,5 @@
 streamlit
+pillow
 pandas
-pil
 qrcode
 zipfile
