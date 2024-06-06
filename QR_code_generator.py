@@ -5,6 +5,8 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import zipfile
 
+st.set_page_config("QR Code generator", page_icon= ":black_medium_square:")
+
 def generate_qr_code_with_text(link, text, add_text):
     # Ensure text is a string
     text = str(text)
@@ -29,7 +31,8 @@ def generate_qr_code_with_text(link, text, add_text):
 
     # Calculate text size and position if text is to be added
     if add_text:
-        text_width, text_height = font.getsize(text)
+        text_bbox = font.getbbox(text)
+        text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
         image_height = qr_height + text_height + 10
     else:
         image_height = qr_height
