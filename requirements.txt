@@ -1,4 +1,6 @@
 streamlit
 pillow
+openpyxl
 pandas
 qrcode
+zipfile36
