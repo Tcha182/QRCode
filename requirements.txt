@@ -2,4 +2,3 @@ streamlit
 pillow
 pandas
 qrcode
-zipfile
