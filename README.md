@@ -1,16 +1,16 @@
-QR Code Generator for RATP Dev Teams
+**QR Code Generator for RATP Dev Teams**
 This application is designed to help generate QR codes for the teams of RATP Dev. These QR codes are intended to be placed at bus stops to provide users with real-time passenger information and vehicle arrival times, but it ca really be used to generate any kind of QR codes.
 
-Features
+**Features**
 Upload an Excel file with URLs and names.
 Generate QR codes for each URL.
 Optionally add names to the QR codes.
 Download the generated QR codes as a ZIP file.
 
-Access
+**Access**
 The app is available here: https://qrcodegenerator-corentin-t.streamlit.app/
 
-Example
+**Example**
 1.	Prepare an Excel file with the following structure:
    
 URL	Name
