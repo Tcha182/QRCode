@@ -7,7 +7,16 @@ import zipfile
 
 st.set_page_config(page_title="QR Code Explore", page_icon=":black_medium_square:")
 
-st.logo("explore.png")
+st.markdown("""
+<style>
+	[data-testid="stDecoration"] {
+		display: none;
+	}
+
+</style>""",
+unsafe_allow_html=True)
+
+st.logo("explore.png",link="https://media1.tenor.com/m/PBTNHWOOJqgAAAAC/raptor-dinosaur.gif")
 
 def generate_qr_code_with_text(link, text, add_text):
     text = str(text)
@@ -63,7 +72,8 @@ if uploaded_file and uploaded_file != st.session_state.prev_uploaded_file:
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
-    st.write("Data Preview:", df)
+    st.dataframe(df,use_container_width=True)
+    #st.write("Data Preview:", df)
 
     link_column = st.selectbox("Select the column with URLs", df.columns)
     text_column = st.selectbox("Select the column with names", df.columns)
