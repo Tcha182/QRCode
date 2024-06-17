@@ -16,7 +16,8 @@ st.markdown("""
 </style>""",
 unsafe_allow_html=True)
 
-st.logo("explore.png",link="https://media1.tenor.com/m/PBTNHWOOJqgAAAAC/raptor-dinosaur.gif")
+#st.logo("explore.png",link="https://media1.tenor.com/m/PBTNHWOOJqgAAAAC/raptor-dinosaur.gif")
+st.logo("explore.png")
 
 def generate_qr_code_with_text(link, text, add_text):
     text = str(text)
@@ -102,8 +103,7 @@ if uploaded_file:
                 progress_bar.progress(progress)
                 status_text.text(f"Processing {idx + 1}/{len(df)}")
 
-            st.success("QR code generation complete!")
-            status_text.text("QR code generation complete!")
+            status_text.success("QR code generation complete!")
 
 if 'images' in st.session_state and st.session_state.images:
     zip_buffer = BytesIO()
