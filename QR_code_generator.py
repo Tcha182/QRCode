@@ -149,7 +149,9 @@ if 'images_png' in st.session_state and st.session_state.images_png:
         mime="application/zip"
     )
 
-    st.write("Generated QR Codes:")
-    for text, png_buffer in st.session_state.images_png.items():
+    selected_name = st.selectbox("Select a QR Code to display", list(st.session_state.images_png.keys()))
+
+    if selected_name:
+        png_buffer = st.session_state.images_png[selected_name]
         png_buffer.seek(0)
-        st.image(png_buffer, caption=f"{text}.png", use_column_width=True)
+        st.image(png_buffer, caption=f"{selected_name}.png", use_column_width=True)
