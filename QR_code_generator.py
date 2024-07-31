@@ -5,6 +5,7 @@ import qrcode.image.svg
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import zipfile
+import os
 
 st.set_page_config(page_title="QR Code Explore", page_icon=":black_medium_square:")
 
@@ -15,7 +16,10 @@ st.markdown("""
     }
 </style>""", unsafe_allow_html=True)
 
-def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG'):
+# Path to the bundled Arial font file
+FONT_PATH = os.path.join(os.path.dirname(__file__), "arial.ttf")
+
+def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG', dpi=300):
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -38,13 +42,13 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG')
 
         if add_text and text:
             try:
-                # Use a more common font or bundle a specific font
-                font = ImageFont.truetype("arial.ttf", 60)  # Font size
+                # Use the bundled Arial font
+                font = ImageFont.truetype(FONT_PATH, 60)  # Font size
             except IOError:
                 font = ImageFont.load_default()
             text_bbox = font.getbbox(text)
             text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
-            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')  # Border size
+            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white', (dpi, dpi))  # Border size and DPI
             draw = ImageDraw.Draw(combined_image)
             combined_image.paste(img, (0, 0))
             text_position = (qr_width - text_width - 10, qr_height + 0)  # Bottom right corner
@@ -52,7 +56,7 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG')
             img = combined_image
 
         buffer = BytesIO()
-        img.save(buffer, format="PNG")
+        img.save(buffer, format="PNG", dpi=(dpi, dpi))
         buffer.seek(0)
         return buffer
 
