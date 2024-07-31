@@ -16,6 +16,8 @@ st.markdown("""
     }
 </style>""", unsafe_allow_html=True)
 
+st.logo("explore.png")
+
 # Path to the bundled Arial font file
 FONT_PATH = os.path.join(os.path.dirname(__file__), "arial.ttf")
 
