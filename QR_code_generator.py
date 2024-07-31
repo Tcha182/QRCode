@@ -48,7 +48,7 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
                 font = ImageFont.load_default()
             text_bbox = font.getbbox(text)
             text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
-            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white', (dpi, dpi))  # Border size and DPI
+            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')  # Border size
             draw = ImageDraw.Draw(combined_image)
             combined_image.paste(img, (0, 0))
             text_position = (qr_width - text_width - 10, qr_height + 0)  # Bottom right corner
