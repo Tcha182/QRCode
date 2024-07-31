@@ -38,6 +38,7 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG')
 
         if add_text and text:
             try:
+                # Use a more common font or bundle a specific font
                 font = ImageFont.truetype("arial.ttf", 60)  # Font size
             except IOError:
                 font = ImageFont.load_default()
@@ -58,14 +59,18 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG')
 
 st.title("QR Code Generator")
 
-# Store the previous file in session state
+# Store the previous file and columns in session state
 if 'prev_uploaded_file' not in st.session_state:
     st.session_state.prev_uploaded_file = None
+if 'prev_link_column' not in st.session_state:
+    st.session_state.prev_link_column = None
+if 'prev_text_column' not in st.session_state:
+    st.session_state.prev_text_column = None
 
 uploaded_file = st.file_uploader("Upload an Excel file", type=["xlsx", "xls"])
 
-# Clear session state if a new file is uploaded
-if uploaded_file and uploaded_file != st.session_state.prev_uploaded_file:
+# Clear session state if a new file is uploaded or columns change
+if uploaded_file and (uploaded_file != st.session_state.prev_uploaded_file):
     st.session_state.prev_uploaded_file = uploaded_file
     st.session_state.images_png = {}
     st.session_state.images_svg = {}
@@ -74,9 +79,16 @@ if uploaded_file:
     df = pd.read_excel(uploaded_file)
     st.dataframe(df, use_container_width=True)
 
-    link_column = st.selectbox("Select the column with URLs", df.columns)
-    text_column = st.selectbox("Select the column with names", df.columns)
+    link_column = st.selectbox("Select the column with URLs", df.columns, key='link_column')
+    text_column = st.selectbox("Select the column with names", df.columns, key='text_column')
     add_text = st.checkbox("Add names to QR codes", value=True)
+
+    # Clear session state if columns change
+    if (link_column != st.session_state.prev_link_column) or (text_column != st.session_state.prev_text_column):
+        st.session_state.images_png = {}
+        st.session_state.images_svg = {}
+        st.session_state.prev_link_column = link_column
+        st.session_state.prev_text_column = text_column
 
     if df[text_column].duplicated().any():
         st.warning("There are duplicate names in the selected column. Please ensure all names are unique.")
