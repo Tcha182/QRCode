@@ -46,6 +46,11 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
                 font = ImageFont.truetype(FONT_PATH, 60)  # Font size
             except IOError:
                 font = ImageFont.load_default()
+
+            # Limit the length of the text to avoid issues
+            if len(text) > 50:
+                text = text[:50] + '...'  # Truncate long text
+
             text_bbox = font.getbbox(text)
             text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
             combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')  # Border size
