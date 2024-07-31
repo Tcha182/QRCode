@@ -131,7 +131,7 @@ if uploaded_file:
 
             status_text.success("QR code generation complete!")
 
-if 'images_png' in st.session_state and st.session_state.images_png and 'images_svg' in st.session_state and st.session_state.images_svg:
+if 'images_png' in st.session_state and st.session_state.images_png:
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
         for text, png_buffer in st.session_state.images_png.items():
@@ -153,6 +153,3 @@ if 'images_png' in st.session_state and st.session_state.images_png and 'images_
     for text, png_buffer in st.session_state.images_png.items():
         png_buffer.seek(0)
         st.image(png_buffer, caption=f"{text}.png", use_column_width=True)
-    for text, svg_buffer in st.session_state.images_svg.items():
-        svg_buffer.seek(0)
-        st.write(f"{text}.svg", svg_buffer.getvalue().decode())
