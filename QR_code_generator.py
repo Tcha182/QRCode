@@ -10,8 +10,6 @@ import os
 st.set_page_config(page_title="QR Code Explore", page_icon=":black_medium_square:")
 
 
-st.write("HELLO")
-
 st.markdown("""
 <style>
     [data-testid="stDecoration"] {
