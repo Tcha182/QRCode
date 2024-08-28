@@ -6,9 +6,9 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import zipfile
 import os
+from collections import defaultdict
 
 st.set_page_config(page_title="QR Code Explore", page_icon=":black_medium_square:")
-
 
 st.markdown("""
 <style>
@@ -45,20 +45,18 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
 
         if add_text and text:
             try:
-                # Use the bundled Arial font
                 font = ImageFont.truetype(FONT_PATH, 60)  # Font size
             except IOError:
                 font = ImageFont.load_default()
 
-            # Ensure the text is a string
             text = str(text)
 
             text_bbox = font.getbbox(text)
             text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
-            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')  # Border size
+            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')
             draw = ImageDraw.Draw(combined_image)
             combined_image.paste(img, (0, 0))
-            text_position = (qr_width - text_width - 10, qr_height + 0)  # Bottom right corner
+            text_position = (qr_width - text_width - 10, qr_height + 0)
             draw.text(text_position, text, fill='black', font=font)
             img = combined_image
 
@@ -101,46 +99,52 @@ if uploaded_file:
         st.session_state.prev_link_column = link_column
         st.session_state.prev_text_column = text_column
 
-    if df[text_column].duplicated().any():
-        st.warning("There are duplicate names in the selected column. Please ensure all names are unique.")
-    else:
-        if st.button("Generate QR Codes"):
-            if 'images_png' not in st.session_state:
-                st.session_state.images_png = {}
-            if 'images_svg' not in st.session_state:
-                st.session_state.images_svg = {}
+    name_count = defaultdict(int)  # Track occurrences of each name
+    duplicate_detected = df[text_column].duplicated().any()
 
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+    if duplicate_detected:
+        st.warning("There are duplicate names in the selected column. Unique filenames will be generated.")
 
-            for idx, row in df.iterrows():
-                link = row[link_column]
-                text = row[text_column]
+    if st.button("Generate QR Codes"):
+        if 'images_png' not in st.session_state:
+            st.session_state.images_png = {}
+        if 'images_svg' not in st.session_state:
+            st.session_state.images_svg = {}
 
-                if pd.isna(link) or pd.isna(text):
-                    st.error(f"Missing data in row {idx + 1}. Skipping.")
-                    continue
+        progress_bar = st.progress(0)
+        status_text = st.empty()
 
-                png_buffer = generate_qr_code(link, text, add_text, format='PNG')
-                svg_buffer = generate_qr_code(link, text, add_text, format='SVG')
-                st.session_state.images_png[text] = png_buffer
-                st.session_state.images_svg[text] = svg_buffer
+        for idx, row in df.iterrows():
+            link = row[link_column]
+            text = row[text_column]
 
-                progress = (idx + 1) / len(df)
-                progress_bar.progress(progress)
-                status_text.text(f"Processing {idx + 1}/{len(df)}")
+            if pd.isna(link) or pd.isna(text):
+                st.error(f"Missing data in row {idx + 1}. Skipping.")
+                continue
 
-            status_text.success("QR code generation complete!")
+            name_count[text] += 1
+            filename = f"{text}_{name_count[text]}" if duplicate_detected else text
+
+            png_buffer = generate_qr_code(link, text, add_text, format='PNG')
+            svg_buffer = generate_qr_code(link, text, add_text, format='SVG')
+            st.session_state.images_png[filename] = png_buffer
+            st.session_state.images_svg[filename] = svg_buffer
+
+            progress = (idx + 1) / len(df)
+            progress_bar.progress(progress)
+            status_text.text(f"Processing {idx + 1}/{len(df)}")
+
+        status_text.success("QR code generation complete!")
 
 if 'images_png' in st.session_state and st.session_state.images_png:
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for text, png_buffer in st.session_state.images_png.items():
+        for filename, png_buffer in st.session_state.images_png.items():
             png_buffer.seek(0)
-            zip_file.writestr(f"PNG/{text}.png", png_buffer.read())
-        for text, svg_buffer in st.session_state.images_svg.items():
+            zip_file.writestr(f"PNG/{filename}.png", png_buffer.read())
+        for filename, svg_buffer in st.session_state.images_svg.items():
             svg_buffer.seek(0)
-            zip_file.writestr(f"SVG/{text}.svg", svg_buffer.read())
+            zip_file.writestr(f"SVG/{filename}.svg", svg_buffer.read())
     zip_buffer.seek(0)
 
     st.download_button(
