@@ -111,7 +111,8 @@ if uploaded_file:
         if 'images_svg' not in st.session_state:
             st.session_state.images_svg = {}
 
-        progress_bar = st.progress(0)
+        progress_container = st.empty()
+        progress_bar = progress_container.progress(0)
         status_text = st.empty()
 
         for idx, row in df.iterrows():
@@ -134,6 +135,7 @@ if uploaded_file:
             progress_bar.progress(progress)
             status_text.text(f"Processing {idx + 1}/{len(df)}")
 
+        progress_container.empty()
         status_text.success("QR code generation complete!")
 
 if 'images_png' in st.session_state and st.session_state.images_png:
