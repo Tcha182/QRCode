@@ -65,6 +65,18 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
         buffer.seek(0)
         return buffer
 
+def find_most_likely_url_column(df):
+    """Identify the column most likely to contain URLs."""
+    url_keywords = ['http://', 'https://', 'www.']
+    url_scores = {}
+
+    for column in df.columns:
+        score = sum(df[column].astype(str).str.contains('|'.join(url_keywords)))
+        url_scores[column] = score
+
+    # Get the column with the highest score
+    likely_url_column = max(url_scores, key=url_scores.get, default=None)
+    return likely_url_column
 
 st.title("QR Code Generator")
 
@@ -84,81 +96,109 @@ if uploaded_file and (uploaded_file != st.session_state.prev_uploaded_file):
     st.session_state.images_png = {}
     st.session_state.images_svg = {}
 
+
 if uploaded_file:
-    df = pd.read_excel(uploaded_file)
-    st.dataframe(df, use_container_width=True)
+    try:
+        df = pd.read_excel(uploaded_file)
+        
+        # Sanity check: Ensure the dataframe has at least one row and two columns
+        if df.shape[0] < 1 or df.shape[1] < 2:
+            st.error("The file must contain at least one row and two columns. Please upload a valid file.")
+        else:
+            with st.expander("**Data Preview**", expanded=True, icon="🔍"):
+                st.dataframe(df, use_container_width=True)
 
-    link_column = st.selectbox("Select the column with URLs", df.columns, key='link_column')
-    text_column = st.selectbox("Select the column with names", df.columns, key='text_column')
-    add_text = st.checkbox("Add names to QR codes", value=True)
+            col1, col2 = st.columns(2)
 
-    # Clear session state if columns change
-    if (link_column != st.session_state.prev_link_column) or (text_column != st.session_state.prev_text_column):
-        st.session_state.images_png = {}
-        st.session_state.images_svg = {}
-        st.session_state.prev_link_column = link_column
-        st.session_state.prev_text_column = text_column
+            # Attempt to automatically detect the most likely URL column
+            likely_url_column = None
+            try:
+                likely_url_column = find_most_likely_url_column(df)
+            except Exception as e:
+                st.warning(f"Failed to automatically detect URL column: {e}")
 
-    name_count = defaultdict(int)  # Track occurrences of each name
-    duplicate_detected = df[text_column].duplicated().any()
+            # Set default selection based on detection, fallback to default selection
+            if likely_url_column:
+                link_column = col1.selectbox("Select the column with URLs", df.columns, index=df.columns.get_loc(likely_url_column))
+            else:
+                link_column = col1.selectbox("Select the column with URLs", df.columns)
 
-    if duplicate_detected:
-        st.warning("There are duplicate names in the selected column. Unique filenames will be generated.")
+            text_column = col2.selectbox("Select the column with names", df.columns, key='text_column')
+            add_text = st.checkbox("Add names to QR codes", value=True)
 
-    if st.button("Generate QR Codes"):
-        if 'images_png' not in st.session_state:
-            st.session_state.images_png = {}
-        if 'images_svg' not in st.session_state:
-            st.session_state.images_svg = {}
+            # Clear session state if columns change
+            if (link_column != st.session_state.prev_link_column) or (text_column != st.session_state.prev_text_column):
+                st.session_state.images_png = {}
+                st.session_state.images_svg = {}
+                st.session_state.prev_link_column = link_column
+                st.session_state.prev_text_column = text_column
 
-        progress_container = st.empty()
-        progress_bar = progress_container.progress(0)
-        status_text = st.empty()
+            name_count = defaultdict(int)  # Track occurrences of each name
+            duplicate_detected = df[text_column].duplicated().any()
 
-        for idx, row in df.iterrows():
-            link = row[link_column]
-            text = row[text_column]
+            if duplicate_detected:
+                st.warning("There are duplicate names in the selected column. Unique filenames will be generated.")
 
-            if pd.isna(link) or pd.isna(text):
-                st.error(f"Missing data in row {idx + 1}. Skipping.")
-                continue
+            col1, col2 = st.columns(2)
 
-            name_count[text] += 1
-            filename = f"{text}_{name_count[text]}" if duplicate_detected else text
+            generate_qr_codes = col1.button("**Generate QR Codes**", use_container_width=True)
 
-            png_buffer = generate_qr_code(link, text, add_text, format='PNG')
-            svg_buffer = generate_qr_code(link, text, add_text, format='SVG')
-            st.session_state.images_png[filename] = png_buffer
-            st.session_state.images_svg[filename] = svg_buffer
+            if generate_qr_codes:
+                if 'images_png' not in st.session_state:
+                    st.session_state.images_png = {}
+                if 'images_svg' not in st.session_state:
+                    st.session_state.images_svg = {}
 
-            progress = (idx + 1) / len(df)
-            progress_bar.progress(progress)
-            status_text.text(f"Processing {idx + 1}/{len(df)}")
+                progress_container = col2.empty()
+                progress_bar = progress_container.progress(0)
 
-        progress_container.empty()
-        status_text.success("QR code generation complete!")
+                for idx, row in df.iterrows():
+                    link = row[link_column]
+                    text = row[text_column]
 
-if 'images_png' in st.session_state and st.session_state.images_png:
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for filename, png_buffer in st.session_state.images_png.items():
+                    if pd.isna(link) or pd.isna(text):
+                        st.error(f"Missing data in row {idx + 1}. Skipping.")
+                        continue
+
+                    name_count[text] += 1
+                    filename = f"{text}_{name_count[text]}" if duplicate_detected else text
+
+                    png_buffer = generate_qr_code(link, text, add_text, format='PNG')
+                    svg_buffer = generate_qr_code(link, text, add_text, format='SVG')
+                    st.session_state.images_png[filename] = png_buffer
+                    st.session_state.images_svg[filename] = svg_buffer
+
+                    progress = (idx + 1) / len(df)
+                    progress_bar.progress(progress, f"Processing {idx + 1}/{len(df)}")
+
+                progress_container.empty()
+                st.toast("QR code generation complete!", icon="✅")
+
+    except Exception as e:
+        st.error(f"Failed to load the file: {e}")
+
+    if 'images_png' in st.session_state and st.session_state.images_png:
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+            for filename, png_buffer in st.session_state.images_png.items():
+                png_buffer.seek(0)
+                zip_file.writestr(f"PNG/{filename}.png", png_buffer.read())
+            for filename, svg_buffer in st.session_state.images_svg.items():
+                svg_buffer.seek(0)
+                zip_file.writestr(f"SVG/{filename}.svg", svg_buffer.read())
+        zip_buffer.seek(0)
+
+        col2.download_button(
+            label="**Download QR Codes**", 
+            data=zip_buffer,
+            file_name="qr_codes.zip",
+            mime="application/zip",
+            use_container_width=True
+        )
+
+        selected_name = st.selectbox("Select a QR Code to display", list(st.session_state.images_png.keys()))
+
+        if selected_name:
+            png_buffer = st.session_state.images_png[selected_name]
             png_buffer.seek(0)
-            zip_file.writestr(f"PNG/{filename}.png", png_buffer.read())
-        for filename, svg_buffer in st.session_state.images_svg.items():
-            svg_buffer.seek(0)
-            zip_file.writestr(f"SVG/{filename}.svg", svg_buffer.read())
-    zip_buffer.seek(0)
-
-    st.download_button(
-        label="Download QR Codes as ZIP", 
-        data=zip_buffer,
-        file_name="qr_codes.zip",
-        mime="application/zip"
-    )
-
-    selected_name = st.selectbox("Select a QR Code to display", list(st.session_state.images_png.keys()))
-
-    if selected_name:
-        png_buffer = st.session_state.images_png[selected_name]
-        png_buffer.seek(0)
-        st.image(png_buffer, caption=f"{selected_name}.png", use_column_width=True)
+            st.image(png_buffer, caption=f"{selected_name}.png", use_column_width=True)
