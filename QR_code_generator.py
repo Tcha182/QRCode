@@ -8,7 +8,7 @@ import zipfile
 import os
 from collections import defaultdict
 
-st.set_page_config(page_title="QR Code Explore", page_icon=":black_medium_square:")
+st.set_page_config(page_title="QR Code Explore", page_icon=":material/qr_code_2:")
 
 st.markdown("""
 <style>
@@ -96,7 +96,6 @@ if uploaded_file and (uploaded_file != st.session_state.prev_uploaded_file):
     st.session_state.images_png = {}
     st.session_state.images_svg = {}
 
-
 if uploaded_file:
     try:
         df = pd.read_excel(uploaded_file)
@@ -105,8 +104,11 @@ if uploaded_file:
         if df.shape[0] < 1 or df.shape[1] < 2:
             st.error("The file must contain at least one row and two columns. Please upload a valid file.")
         else:
-            with st.expander("**Data Preview**", expanded=True, icon="🔍"):
+            with st.expander("**Data**", expanded=True, icon=":material/table:"):
                 st.dataframe(df, use_container_width=True)
+
+            qr_codes_count = len(df)
+            plural = "s" if qr_codes_count > 1 else ""
 
             col1, col2 = st.columns(2)
 
@@ -119,12 +121,12 @@ if uploaded_file:
 
             # Set default selection based on detection, fallback to default selection
             if likely_url_column:
-                link_column = col1.selectbox("Select the column with URLs", df.columns, index=df.columns.get_loc(likely_url_column))
+                link_column = col1.selectbox(f"Select the column with URL{plural}", df.columns, index=df.columns.get_loc(likely_url_column))
             else:
-                link_column = col1.selectbox("Select the column with URLs", df.columns)
+                link_column = col1.selectbox(f"Select the column with URL{plural}", df.columns)
 
-            text_column = col2.selectbox("Select the column with names", df.columns, key='text_column')
-            add_text = st.checkbox("Add names to QR codes", value=True)
+            text_column = col2.selectbox(f"Select the column with name{plural}", df.columns, key='text_column')
+            add_text = st.checkbox(f"Add name{plural} to QR code{plural}", value=True)
 
             # Clear session state if columns change
             if (link_column != st.session_state.prev_link_column) or (text_column != st.session_state.prev_text_column):
@@ -141,7 +143,7 @@ if uploaded_file:
 
             col1, col2 = st.columns(2)
 
-            generate_qr_codes = col1.button("**Generate QR Codes**", use_container_width=True)
+            generate_qr_codes = col1.button(f"**Generate QR Code{plural}**", use_container_width=True)
 
             if generate_qr_codes:
                 if 'images_png' not in st.session_state:
@@ -168,11 +170,11 @@ if uploaded_file:
                     st.session_state.images_png[filename] = png_buffer
                     st.session_state.images_svg[filename] = svg_buffer
 
-                    progress = (idx + 1) / len(df)
-                    progress_bar.progress(progress, f"Processing {idx + 1}/{len(df)}")
+                    progress = (idx + 1) / qr_codes_count
+                    progress_bar.progress(progress, f"Processing {idx + 1}/{qr_codes_count}")
 
                 progress_container.empty()
-                st.toast("QR code generation complete!", icon="✅")
+                st.toast(f"QR code{plural} generation complete!", icon="✅")
 
     except Exception as e:
         st.error(f"Failed to load the file: {e}")
@@ -189,16 +191,23 @@ if uploaded_file:
         zip_buffer.seek(0)
 
         col2.download_button(
-            label="**Download QR Codes**", 
+            label=f"**Download QR Code{plural}**", 
             data=zip_buffer,
             file_name="qr_codes.zip",
             mime="application/zip",
             use_container_width=True
         )
 
-        selected_name = st.selectbox("Select a QR Code to display", list(st.session_state.images_png.keys()))
+        QR_Review = st.expander(f"**QR Code{plural}**", expanded=True, icon=":material/qr_code:")
+
+        qr_codes_keys = list(st.session_state.images_png.keys())
+
+        if len(qr_codes_keys) > 1:
+            selected_name = QR_Review.selectbox("Select a QR Code to display", qr_codes_keys)
+        else:
+            selected_name = qr_codes_keys[0]  # Automatically select the only available option
 
         if selected_name:
             png_buffer = st.session_state.images_png[selected_name]
             png_buffer.seek(0)
-            st.image(png_buffer, caption=f"{selected_name}.png", use_column_width=True)
+            QR_Review.image(png_buffer, caption=f"{selected_name}.png", use_column_width=True)
