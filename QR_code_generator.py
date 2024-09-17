@@ -8,7 +8,7 @@ import zipfile
 import os
 from collections import defaultdict
 
-st.set_page_config(page_title="QR Code Explore", page_icon=":material/qr_code_2:")
+st.set_page_config(page_title="QR Code Explore Bonjour", page_icon=":material/qr_code_2:")
 
 st.markdown("""
 <style>
