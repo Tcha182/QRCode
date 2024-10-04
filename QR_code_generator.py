@@ -10,12 +10,17 @@ from collections import defaultdict
 
 st.set_page_config(page_title="QR Code Explore", page_icon=":material/qr_code_2:")
 
-st.markdown("""
-<style>
-    [data-testid="stDecoration"] {
-        display: none;
-    }
-</style>""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .css-1v0mbdj {padding-top: 0rem;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 st.logo("explore.png")
 
