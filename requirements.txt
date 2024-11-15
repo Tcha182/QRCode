@@ -1,5 +1,5 @@
 streamlit
-pillow
+Pillow==9.2.0
 openpyxl
 pandas
 qrcode
