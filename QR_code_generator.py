@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import qrcode
 import qrcode.image.svg
-from PIL import Image, ImageDraw, ImageFont
+from PIL import ImageFont, ImageDraw, Image
 from io import BytesIO
 import zipfile
 import os
@@ -38,30 +38,31 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
     qr.make(fit=True)
 
     if format == 'SVG':
+        # Generate SVG directly using SVG image factory
         img = qr.make_image(image_factory=qrcode.image.svg.SvgImage)
-        svg_str = img.to_string().decode("utf-8")
         buffer = BytesIO()
-        buffer.write(svg_str.encode('utf-8'))
+        img.save(buffer)
         buffer.seek(0)
         return buffer
     else:
+        # Generate PNG
         img = qr.make_image(fill='black', back_color='white')
         qr_width, qr_height = img.size
 
         if add_text and text:
             try:
-                font = ImageFont.truetype(FONT_PATH, 60)  # Font size
+                font = ImageFont.truetype(FONT_PATH, 60)
             except IOError:
+                st.error("Font file not found. Using default font.")
                 font = ImageFont.load_default()
 
             text = str(text)
-
-            text_bbox = font.getbbox(text)
-            text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
+            text_width, text_height = font.getsize(text)
             combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')
             draw = ImageDraw.Draw(combined_image)
             combined_image.paste(img, (0, 0))
-            text_position = (qr_width - text_width - 10, qr_height + 0)
+
+            text_position = (qr_width - text_width - 10, qr_height + 10)  # Right alignment
             draw.text(text_position, text, fill='black', font=font)
             img = combined_image
 
@@ -69,6 +70,9 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
         img.save(buffer, format="PNG", dpi=(dpi, dpi))
         buffer.seek(0)
         return buffer
+
+
+
 
 def find_most_likely_url_column(df):
     """Identify the column most likely to contain URLs."""
