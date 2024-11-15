@@ -215,4 +215,4 @@ if uploaded_file:
         if selected_name:
             png_buffer = st.session_state.images_png[selected_name]
             png_buffer.seek(0)
-            QR_Review.image(png_buffer, caption=f"{selected_name}.png", use_column_width=True)
+            QR_Review.image(png_buffer, caption=f"{selected_name}.png", use_container_width=True)
