@@ -57,12 +57,20 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
                 font = ImageFont.load_default()
 
             text = str(text)
-            text_width, text_height = font.getsize(text)
-            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + 20), 'white')
+
+            # Get text dimensions using getbbox
+            text_bbox = font.getbbox(text)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+
+            # Add padding to the image height to avoid cropping
+            padding = 30  # Increase padding as needed
+            combined_image = Image.new('RGB', (qr_width, qr_height + text_height + padding), 'white')
             draw = ImageDraw.Draw(combined_image)
             combined_image.paste(img, (0, 0))
 
-            text_position = (qr_width - text_width - 10, qr_height + 10)  # Right alignment
+            # Align text to the right, slightly higher to avoid cropping
+            text_position = (qr_width - text_width - 10, qr_height + 10)  # Right alignment with 10px padding from the edge
             draw.text(text_position, text, fill='black', font=font)
             img = combined_image
 
@@ -70,8 +78,6 @@ def generate_qr_code(link, text=None, add_text=False, box_size=30, format='PNG',
         img.save(buffer, format="PNG", dpi=(dpi, dpi))
         buffer.seek(0)
         return buffer
-
-
 
 
 def find_most_likely_url_column(df):
