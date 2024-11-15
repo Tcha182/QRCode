@@ -1,6 +1,6 @@
-streamlit==1.40.1
+streamlit
 Pillow==9.2.0
-openpyxl==3.0.9
-pandas==1.5.3
+openpyxl
+pandas
 qrcode==7.4.2
 zipfile36
