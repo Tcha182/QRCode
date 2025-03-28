@@ -215,7 +215,7 @@ def main():
                                 progress_bar.progress(completed / qr_codes_count, f"Processing {completed}/{qr_codes_count}")
 
                     progress_container.empty()
-                    st.success(f"QR code{plural} generation complete!")
+                    st.toast(f"QR code{plural} generation complete!", icon="✅")
                     # end_time = time.time()
                     # elapsed_time = end_time - start_time
                     # st.info(f"⏱️ QR code generation completed in {elapsed_time:.2f} seconds.")
