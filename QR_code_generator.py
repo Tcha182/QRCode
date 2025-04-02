@@ -8,10 +8,10 @@ import zipfile
 import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
+# import time
 
 # Set page configuration and hide default Streamlit UI elements
-st.set_page_config(page_title="QR Code RATP DEV", page_icon=":material/qr_code_2:")
+st.set_page_config(page_title="QR Code Generator", page_icon=":material/qr_code_2:")
 st.markdown(
     """
     <style>
@@ -243,7 +243,7 @@ def main():
             )
 
             # Display the generated QR codes for review
-            with st.expander("**QR Code(s)**", expanded=True, icon=":material/qr_code:"):
+            with st.expander(f"**QR Code{plural}**", expanded=True, icon=":material/qr_code:"):
                 qr_codes_keys = list(st.session_state.images_png.keys())
                 if qr_codes_keys:
                     if len(qr_codes_keys) > 1:
